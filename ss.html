@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&S Burgers</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+  body{background:#000;color:#fff;overflow-x:hidden;}
+  h1,h2,h3{color:#ff0000;text-align:center;}
+  button{cursor:pointer;border:none;border-radius:8px;padding:10px 16px;background:#ff0000;color:#fff;font-weight:bold;transition:.3s;font-size:1em;}
+  button:hover{background:#cc0000;transform:scale(1.05);}
+  input[type=number], select, textarea, input[type=text]{font-size:1em;padding:8px;border-radius:8px;border:none;width:100%;margin:5px 0;}
+  
+  #splash{position:fixed;top:0;left:0;right:0;bottom:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s ease;}
+  #splash img{width:180px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
+  
+  header{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#111;position:sticky;top:0;z-index:100;}
+  header h1{font-size:1.4em;}
+  #cart-btn{position:relative;font-size:1em;}
+  #cart-count{position:absolute;top:-5px;right:-5px;background:red;color:#fff;font-size:.7em;padding:2px 5px;border-radius:50%;}
+
+  .menu{padding:15px;}
+  .section{margin:30px 0;}
+  .items{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
+  .item{background:#111;padding:20px;border-radius:15px;box-shadow:0 0 10px rgba(255,255,255,.1);transition:.3s;}
+  .item:hover{transform:translateY(-3px);box-shadow:0 0 15px rgba(255,0,0,.5);}
+  .item img{width:100%;height:180px;object-fit:cover;border-radius:15px;}
+  .info{display:flex;flex-direction:column;gap:6px;}
+  
+  #cart{position:fixed;top:0;right:-100%;width:280px;height:100%;background:#111;box-shadow:-2px 0 10px rgba(0,0,0,.5);transition:.4s;padding:15px;z-index:1001;overflow-y:auto;}
+  #cart.active{right:0;}
+  
+  #overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:none;z-index:1000;}
+  #overlay.active{display:block;}
+  
+  .cart-item{display:flex;justify-content:space-between;margin:8px 0;flex-wrap:wrap;}
+  .cart-item button{background:red;color:#fff;padding:4px 6px;font-size:.8em;margin-top:3px;}
+  
+  .form-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:#111;padding:15px;border-radius:12px;z-index:1002;width:95%;max-width:360px;display:none;transition:.3s;}
+  .form-modal.active{display:block;transform:translate(-50%,-50%) scale(1);}
+  .form-modal h2{margin-bottom:10px;font-size:1.2em;}
+
+  /* Responsive */
+  @media(max-width:480px){
+    .items{grid-template-columns:1fr;gap:15px;}
+    .item img{height:160px;}
+    button{font-size:0.9em;padding:8px 12px;}
+    #cart{width:90%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="splash"><img src="logo.png" alt="Logo"></div>
+
+<header>
+  <h1>S&S Burgers</h1>
+  <button id="cart-btn">🛒 Carrito <span id="cart-count">0</span></button>
+</header>
+
+<main id="main" style="display:none;">
+  <div class="menu">
+
+    <!-- Comidas -->
+    <div class="section">
+      <h2>🍔 Comidas</h2>
+      <div class="items">
+
+        <!-- Hamburguesa -->
+        <div class="item">
+          <img src="hc.jpg" alt="Hamburguesa">
+          <div class="info">
+            <h3>Hamburguesa Clásica</h3>
+            <p>Con queso, lechuga y jitomate</p>
+            <span class="price">70</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="ham-cant">
+            </label>
+            <div>
+              Ingredientes extra:<br>
+              <label><input type="checkbox" class="ham-extra" value="Queso Extra" data-precio="10"> Queso Extra (+$10)</label><br>
+              <label><input type="checkbox" class="ham-extra" value="Tocino" data-precio="15"> Tocino (+$15)</label><br>
+              <label><input type="checkbox" class="ham-extra" value="Aguacate" data-precio="12"> Aguacate (+$12)</label><br>
+              <label><input type="checkbox" class="ham-extra" value="Jalapeños" data-precio="8"> Jalapeños (+$8)</label>
+            </div>
+            <button class="btn add-hamburguesa">Agregar</button>
+          </div>
+        </div>
+
+        <!-- Boneless -->
+        <div class="item">
+          <img src="bo.jpg" alt="Boneless">
+          <div class="info">
+            <h3>Boneless</h3>
+            <p>Trozos de pollo empanizados con salsa</p>
+            <div>
+              <span class="price">15</span> MXN c/u
+              <label>Cant:
+                <input type="number" min="1" value="1" class="boneless-cant">
+              </label>
+              <label>Salsa:
+                <select class="boneless-sauce">
+                  <option value="BBQ">BBQ</option>
+                  <option value="Buffalo">Buffalo</option>
+                  <option value="Miel Mostaza">Miel Mostaza</option>
+                  <option value="Dulce Picante">Dulce Picante</option>
+                </select>
+              </label>
+              <button class="btn add-boneless">Agregar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Papas -->
+        <div class="item">
+          <img src="papas.avif" alt="Papas Fritas">
+          <div class="info">
+            <h3>Papas Fritas</h3>
+            <p>Clásicas crujientes</p>
+            <span class="price">40</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="papas-cant">
+            </label>
+            <label>Preparadas:
+              <select class="papas-opcion">
+                <option value="Normales">Normales</option>
+                <option value="Con Queso">Con Queso (+15)</option>
+                <option value="Con Queso y Boneless">Con Queso y Boneless (+30)</option>
+              </select>
+            </label>
+            <button class="btn add-papas">Agregar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bebidas -->
+    <div class="section">
+      <h2>🥤 Bebidas</h2>
+      <div class="items">
+        <div class="item">
+          <img src="fre.jpeg" alt="Agua de Fresa">
+          <div class="info">
+            <h3>Agua de Fresa (1L)</h3>
+            <span class="price">25</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="drink-cant">
+            </label>
+            <button class="add-cart">Agregar</button>
+          </div>
+        </div>
+        <div class="item">
+          <img src="dr.jpg" alt="Dr Pepper">
+          <div class="info">
+            <h3>Dr Pepper</h3>
+            <span class="price">20</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="drink-cant">
+            </label>
+            <button class="add-cart">Agregar</button>
+          </div>
+        </div>
+        <div class="item">
+          <img src="ca2.jpg" alt="Capri Sun">
+          <div class="info">
+            <h3>Jugo Capri-Sun</h3>
+            <span class="price">18</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="drink-cant">
+            </label>
+            <button class="add-cart">Agregar</button>
+          </div>
+        </div>
+
+        <!-- Powerade -->
+        <div class="item">
+          <img src="pow.png" alt="Powerade">
+          <div class="info">
+            <h3>Powerade</h3>
+            <span class="price">28</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="powerade-cant">
+            </label>
+            <label>Sabor:
+              <select class="powerade-sabor">
+                <option value="Uva">Uva</option>
+                <option value="Azul">Azul</option>
+                <option value="Naranja">Naranja</option>
+                <option value="Mora Azul">Mora Azul</option>
+              </select>
+            </label>
+            <button class="btn add-powerade">Agregar</button>
+          </div>
+        </div>
+
+        <!-- Coca Cola -->
+        <div class="item">
+          <img src="cocalogo.png" alt="Coca Cola">
+          <div class="info">
+            <h3>Coca-Cola</h3>
+            <span class="price">20</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="coca-cant">
+            </label>
+            <label>Tipo:
+              <select class="coca-tipo">
+                <option value="Clásica">Clásica</option>
+                <option value="Light">Light</option>
+                <option value="Zero">Zero</option>
+                <option value="Sin Cafeína">Sin Cafeína</option>
+              </select>
+            </label>
+            <button class="btn add-coca">Agregar</button>
+          </div>
+        </div>
+
+        <div class="item">
+          <img src="Pu.jpg" alt="Agua">
+          <div class="info">
+            <h3>Botella de Agua</h3>
+            <span class="price">15</span> MXN
+            <label>Cant:
+              <input type="number" min="1" value="1" class="drink-cant">
+            </label>
+            <button class="add-cart">Agregar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Carrito -->
+<div id="cart">
+  <h2>🛒 Carrito</h2>
+  <div id="cart-items"></div>
+  <h3>Total: $<span id="cart-total">0</span> MXN</h3>
+  <button id="open-form">Finalizar Pedido</button>
+  <button id="close-cart">Cerrar</button>
+</div>
+
+<div id="overlay"></div>
+
+<!-- Formulario -->
+<div id="form-modal" class="form-modal">
+  <h2>Finalizar Pedido</h2>
+  <input type="text" id="cliente-nombre" placeholder="Tu Nombre">
+  <input type="text" id="cliente-direccion" placeholder="Tu Dirección">
+  <textarea id="cliente-notas" rows="3" placeholder="Notas adicionales"></textarea>
+  <button id="send-whatsapp">Enviar a WhatsApp</button>
+  <button id="close-form">Cancelar</button>
+</div>
+
+<script>
+const splash=document.getElementById('splash');
+const main=document.getElementById('main');
+const logo=document.querySelector('#splash img');
+const cartBtn=document.getElementById('cart-btn');
+const cart=document.getElementById('cart');
+const closeCartBtn=document.getElementById('close-cart');
+const overlay=document.getElementById('overlay');
+const cartItemsEl=document.getElementById('cart-items');
+const cartTotalEl=document.getElementById('cart-total');
+const openFormBtn=document.getElementById('open-form');
+const formModal=document.getElementById('form-modal');
+const closeFormBtn=document.getElementById('close-form');
+let carrito=[];
+
+// Splash
+logo.addEventListener('click',()=>{splash.style.opacity='0';setTimeout(()=>{splash.style.display='none';main.style.display='block'},500);});
+
+// Carrito
+function openCart(){cart.classList.add('active');overlay.classList.add('active');}
+function closeCart(){cart.classList.remove('active');overlay.classList.remove('active');}
+cartBtn.addEventListener('click',()=>cart.classList.contains('active')?closeCart():openCart());
+closeCartBtn.addEventListener('click',closeCart);
+overlay.addEventListener('click',()=>{closeCart();closeForm();});
+
+// Items normales (bebidas simples y agua de fresa)
+document.querySelectorAll('.add-cart').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombre=item.querySelector('h3').innerText;
+    const precio=parseFloat(item.querySelector('.price').innerText);
+    let cantidad=parseInt(item.querySelector('input[type=number]')?.value)||1;
+    carrito.push({nombre:`${nombre} x${cantidad}`,precio:precio*cantidad});
+    actualizarCarrito();
+    openCart();
+  });
+});
+
+// Boneless
+document.querySelectorAll('.add-boneless').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombre=item.querySelector('h3').innerText;
+    const precioUnit=parseFloat(item.querySelector('.price').innerText);
+    const cantidad=parseInt(item.querySelector('.boneless-cant').value)||1;
+    const salsa=item.querySelector('.boneless-sauce').value;
+    const precio=precioUnit*cantidad;
+    carrito.push({nombre:`${nombre} x${cantidad} (${salsa})`,precio});
+    actualizarCarrito();
+    openCart();
+  });
+});
+
+// Papas
+document.querySelectorAll('.add-papas').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombre=item.querySelector('h3').innerText;
+    let precio=parseFloat(item.querySelector('.price').innerText);
+    const cantidad=parseInt(item.querySelector('.papas-cant').value)||1;
+    const opcion=item.querySelector('.papas-opcion').value;
+    if(opcion==="Con Queso") precio+=15;
+    if(opcion==="Con Queso y Boneless") precio+=30;
+    carrito.push({nombre:`${nombre} x${cantidad} (${opcion})`,precio:precio*cantidad});
+    actualizarCarrito();
+    openCart();
+  });
+});
+
+// Powerade
+document.querySelectorAll('.add-powerade').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombre=item.querySelector('h3').innerText;
+    const precio=parseFloat(item.querySelector('.price').innerText);
+    const sabor=item.querySelector('.powerade-sabor').value;
+    const cantidad=parseInt(item.querySelector('.powerade-cant').value)||1;
+    carrito.push({nombre:`${nombre} x${cantidad} (${sabor})`,precio:precio*cantidad});
+    actualizarCarrito();
+    openCart();
+  });
+});
+
+// Coca
+document.querySelectorAll('.add-coca').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombre=item.querySelector('h3').innerText;
+    const precio=parseFloat(item.querySelector('.price').innerText);
+    const tipo=item.querySelector('.coca-tipo').value;
+    const cantidad=parseInt(item.querySelector('.coca-cant').value)||1;
+    carrito.push({nombre:`${nombre} x${cantidad} (${tipo})`,precio:precio*cantidad});
+    actualizarCarrito();
+    openCart();
+  });
+});
+
+// Hamburguesa
+document.querySelectorAll('.add-hamburguesa').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    const item=e.target.closest('.item');
+    const nombreBase=item.querySelector('h3').innerText;
+    const precioBase=parseFloat(item.querySelector('.price').innerText);
+    const cantidad=parseInt(item.querySelector('.ham-cant').value)||1;
+
+    let extras=[];
+    let precioExtras=0;
+    item.querySelectorAll('.ham-extra:checked').forEach(chk=>{
+      extras.push(chk.value);
+      precioExtras+=parseInt(chk.dataset.precio);
+    });
+
+    const precioTotal=(precioBase+precioExtras)*cantidad;
+    const nombre=`${nombreBase} x${cantidad}${extras.length?" + "+extras.join(", "):""}`;
+
+    carrito.push({nombre,precio:precioTotal});
+    actualizarCarrito();
+    openCart();
+
+    item.querySelector('.ham-cant').value=1;
+    item.querySelectorAll('.ham-extra').forEach(chk=>chk.checked=false);
+  });
+});
+
+// Actualizar carrito
+function actualizarCarrito(){
+  cartItemsEl.innerHTML='';
+  let total=0;
+  carrito.forEach((prod,i)=>{
+    total+=prod.precio;
+    const div=document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML=`<span>${prod.nombre}</span><span>$${prod.precio} MXN <button data-index="${i}" class="remove-item">❌</button></span>`;
+    cartItemsEl.appendChild(div);
+  });
+  cartTotalEl.innerText=total.toFixed(2);
+  document.getElementById('cart-count').innerText=carrito.length;
+  document.querySelectorAll('.remove-item').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const idx=parseInt(e.target.getAttribute('data-index'),10);
+      carrito.splice(idx,1);
+      actualizarCarrito();
+    });
+  });
+}
+
+// Formulario
+function openForm(){formModal.classList.add('active');overlay.classList.add('active');}
+function closeForm(){formModal.classList.remove('active');overlay.classList.remove('active');}
+openFormBtn.addEventListener('click',()=>{if(carrito.length>0) openForm(); else alert("Carrito vacío");});
+closeFormBtn.addEventListener('click',closeForm);
+
+// WhatsApp
+document.getElementById('send-whatsapp').addEventListener('click',()=>{
+  const nombre=document.getElementById('cliente-nombre').value.trim();
+  const direccion=document.getElementById('cliente-direccion').value.trim();
+  const notas=document.getElementById('cliente-notas').value.trim();
+  if(!nombre||!direccion){alert("Por favor ingresa nombre y dirección.");return;}
+  let texto=`Hola, quiero hacer el siguiente pedido:\n\n`;
+  carrito.forEach(i=>{texto+=`- ${i.nombre} - $${i.precio}\n`;});
+  let total=carrito.reduce((sum,i)=>sum+i.precio,0);
+  texto+=`\nTotal: $${total} MXN\n\n`;
+  texto+=`Nombre: ${nombre}\nDirección: ${direccion}\nComentarios: ${notas}`;
+  let url="https://wa.me/528941058338?text="+encodeURIComponent(texto);
+  window.open(url,'_blank');
+});
+</script>
+
+</body>
+</html>
